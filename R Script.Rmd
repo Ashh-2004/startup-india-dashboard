@@ -1,0 +1,116 @@
+```{r}
+# Loading required libraries
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r}
+# Reading the dataset
+data <- read.csv("C:/Users/Admin/Downloads/gov-data-final.csv", stringsAsFactors = FALSE)
+data
+```
+```{r}
+# Removing any rows with missing critical fields
+data_clean <- data %>%
+  filter(!is.na(Year) & !is.na(State) & !is.na(Industry) & !is.na(Count)) %>%
+  mutate(
+    Year = as.integer(Year),
+    Count = as.integer(Count),
+    State = trimws(State),
+    Industry = trimws(Industry)
+  )
+```
+
+```{r}
+# Aggregating total startups by year
+yearly_trends <- data_clean %>%
+  group_by(Year) %>%
+  summarise(Total_Startups = sum(Count, na.rm = TRUE)) %>%
+  arrange(Year)
+```
+
+```{r}
+# Aggregating startups by state
+state_trends <- data_clean %>%
+  group_by(State) %>%
+  summarise(Total_Startups = sum(Count, na.rm = TRUE)) %>%
+  arrange(desc(Total_Startups))
+```
+
+```{r}
+# Aggregating startups by industry
+industry_trends <- data_clean %>%
+  group_by(Industry) %>%
+  summarise(Total_Startups = sum(Count, na.rm = TRUE)) %>%
+  arrange(desc(Total_Startups))
+```
+
+```{r}
+# Top 5 industries
+top_industries <- head(industry_trends, 5)
+# Top 5 states
+top_states <- head(state_trends, 5)
+```
+
+```{r}
+top_industries
+top_states
+```
+```{r}
+# Simulating funding and valuation data (since not provided)
+set.seed(123) # For reproducibility
+data_with_funding <- data_clean %>%
+  mutate(
+    # Simulated funding (in lakhs, random between 50 and 5000)
+    Funding_Lakhs = runif(n(), 50, 5000),
+    # Simulated valuation (funding * random multiplier between 5 and 20)
+    Valuation_Lakhs = Funding_Lakhs * runif(n(), 5, 20)
+  )
+```
+
+```{r}
+# Aggregating funding and valuation by year
+funding_valuation_trends <- data_with_funding %>%
+  group_by(Year) %>%
+  summarise(
+    Total_Funding_Lakhs = sum(Funding_Lakhs, na.rm = TRUE),
+    Total_Valuation_Lakhs = sum(Valuation_Lakhs, na.rm = TRUE)
+  )
+```
+
+```{r}
+setwd("D:/Project/Startup Project")
+getwd()
+```
+
+
+```{r}
+# Exporting results for Power BI
+write.csv(yearly_trends, "yearly_trends.csv", row.names = FALSE)
+write.csv(state_trends, "state_trends.csv", row.names = FALSE)
+write.csv(industry_trends, "industry_trends.csv", row.names = FALSE)
+write.csv(top_industries, "top_industries.csv", row.names = FALSE)
+write.csv(top_states, "top_states.csv", row.names = FALSE)
+write.csv(funding_valuation_trends, "funding_valuation_trends.csv", row.names = FALSE)
+write.csv(data_with_funding, "data_with_funding.csv", row.names = FALSE)
+```
+
+```{r}
+# Plotting yearly trends with final adjustments
+ggplot(yearly_trends, aes(x = Year, y = Total_Startups)) +
+  geom_line(color = "blue", size = 1.5) +  # Thicker line
+  geom_point(size = 3) +
+  geom_text(aes(label = Total_Startups), vjust = -0.5, size = 5, fontface = "bold") +  # Bolder labels
+  annotate("text", x = 2023.5, y = 34842, label = "Peak in 2023", color = "red", size = 4, vjust = -1.5) +  # Annotation for 2024 dip
+  scale_y_continuous(breaks = seq(0, 40000, by = 10000), labels = scales::comma) +
+  theme_minimal() +
+  labs(title = "Total Startups in India (2016-2024)", x = "Year", y = "Total Startups") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 12)
+  )
+
+```
+
